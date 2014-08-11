@@ -57,12 +57,12 @@ def get_tags(ticket_custom_fields):
 def create_uv_client():
 	'''returns a uservoice client api instance'''
 	import uservoice
-	import uservoice_config
+	from uservoice_config import *
 	
 	return uservoice.Client(SUBDOMAIN_NAME, API_KEY, API_SECRET)
 
 def send_ticket_to_zd(new_ticket):
-	import zendesk_config
+	from zendesk_config import *
 	_url = "https://%s.zendesk.com/api/v2/imports/tickets.json" % subdomain
 	_headers = {'Content-Type': 'application/json'}
 	_data = json.dumps({'ticket': new_ticket})
