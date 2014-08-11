@@ -1,6 +1,8 @@
 ''' migrate all UserVoice tickets to Zendesk using official APIs from Uservoice'''
 import json
 import requests
+from uservoice_config import *
+from zendesk_config import *
 
 def reformat_uv_messages(new_ticket, uv_messages):
 	'''input is a list of nested dicts
@@ -57,12 +59,11 @@ def get_tags(ticket_custom_fields):
 def create_uv_client():
 	'''returns a uservoice client api instance'''
 	import uservoice
-	from uservoice_config import *
+	
 	
 	return uservoice.Client(SUBDOMAIN_NAME, API_KEY, API_SECRET)
 
 def send_ticket_to_zd(new_ticket):
-	from zendesk_config import *
 	_url = "https://%s.zendesk.com/api/v2/imports/tickets.json" % subdomain
 	_headers = {'Content-Type': 'application/json'}
 	_data = json.dumps({'ticket': new_ticket})
