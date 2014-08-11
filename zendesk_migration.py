@@ -1,11 +1,15 @@
 ''' migrate all UserVoice tickets to Zendesk using official APIs from Uservoice'''
+''' to do: refactor for clarity, add user import, and fix multi-comment threads, which aren't working'''
+
 import json
 import requests
 from uservoice_config import *
 from zendesk_config import *
 
 def reformat_uv_messages(new_ticket, uv_messages):
-	'''input is a list of nested dicts
+	'''input is a list of nested dicts. See data_types.md for full description, since 
+	UserVoice doesn't have one.
+
 	['body', 
 	'attachments',
 	'channel',
@@ -15,6 +19,7 @@ def reformat_uv_messages(new_ticket, uv_messages):
 	'id', 
 	'plaintext_body', 
 	'sender']
+
 	output should look like:
 	"comments": [
 	      { "author_id": 827, "value": "This is a comment", "created_at": "2009-06-25T10:15:18Z" },
@@ -32,9 +37,9 @@ def reformat_uv_messages(new_ticket, uv_messages):
 		zd_message = {}
 		zd_message['updated_at'] = message['updated_at']
 		zd_message['author_id'] = message['sender']['id']
-		#zd_message['html_body'] = message['body']# .replace("\"", r"\"").replace("\'", r"\'")
+		zd_message['html_body'] = message['body']# .replace("\"", r"\"").replace("\'", r"\'")
 		zd_message['value'] = message['plaintext_body']
-		#zd_message['body'] = message['plaintext_body']# .replace("\"", r"\"").replace("\'", r"\'")
+		zd_message['body'] = message['plaintext_body']# .replace("\"", r"\"").replace("\'", r"\'")
 		comments.append(zd_message)
 
 	dates.sort()
@@ -88,7 +93,6 @@ def send_ticket_to_zd(new_ticket):
 def download_uv_tickets(uv_ticket_outfile, total_records):
 	'''hits the uservoice API to return tickets 100 at a time'''
 	uv_client = create_uv_client()
-
 	base_url = "/api/v1/tickets.json?"
 	total_records = total_records
 	
@@ -133,6 +137,7 @@ def import_tickets_to_zd(uv_ticket_outfile):
 
 def process_uv_ticket(ticket): 		
 	''' API format http://developer.zendesk.com/documentation/rest_api/tickets.html'''
+	''' to do: make more mappings;  make them better; import users and orgs '''
 	#map to the UV id. Can we force an ID in zendesk to match?
 	new_ticket = {}	
 	new_ticket = reformat_uv_messages(new_ticket, ticket['messages'])
@@ -148,11 +153,11 @@ def process_uv_ticket(ticket):
 		pass
 	# add static values to all tickets? include channel
 	new_ticket['status'] = 'closed'
-	new_ticket['recipient'] = 'support@mixpanel.com'		
+	new_ticket['recipient'] = 'support@mixpanel.com'
 	return new_ticket
 	
 if __name__ == '__main__':
-	uv_ticket_outfile="uservoice_export.json"
+	uv_ticket_outfile = "uservoice_export.json"
 	#note; I don't really want to get all the UV tickets right now.
 	''' to do: make each API call write to Zendesk without using disk '''
 	if False:
