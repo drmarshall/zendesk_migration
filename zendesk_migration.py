@@ -35,8 +35,7 @@ def reformat_uv_messages(new_ticket, uv_messages):
 			new_ticket['description'] = message['body']
 		dates.append(message['created_at'])
 		zd_message = {}
-		zd_message['updated_at'] = message['updated_at']
-		zd_message['author_id'] = message['sender']['id']
+		zd_message['updated_at'] = message['created_at']
 		''' 
 		it turns out that a user must already exist to be an author
 		so, I created a user to hold all old tickets, with id = 352590805
@@ -92,11 +91,12 @@ def send_ticket_to_zd(new_ticket):
 			errorfile.write(str(new_ticket['external_id'])+"\n")
 			errorfile.write(str(r.status_code)+"\n")
 			errorfile.write(_data)
+			errorfile.write("\n")
 			print r.text
 	else:
 		with open("successes.log", "a") as successes:
 			successes.write(_data)
-
+			successes.write("\n")
 	# you can also curl if you prefer!
 	#from os import system
 	#command = '''curl "https://%s.zendesk.com/api/v2/imports/tickets.json" -v -u %s:%s -X POST -d "%s" -H "Content-Type: application/json"''' % (subdomain, email, zendesk_password, data)
@@ -143,17 +143,16 @@ def import_tickets_to_zd(uv_ticket_outfile):
 		for line in uservoice_export: 
 			print "Working on ticket batch %i" % batch
 			ticket_batch = json.loads(line)
-			if batch > 16:
-				for ticket in ticket_batch:			
-					new_ticket = process_uv_ticket(ticket)
-					send_ticket_to_zd(new_ticket)
+			for ticket in ticket_batch:			
+				new_ticket = process_uv_ticket(ticket)
+				send_ticket_to_zd(new_ticket)
 			batch += 1
 
 def process_uv_ticket(ticket): 		
 	''' API format http://developer.zendesk.com/documentation/rest_api/tickets.html'''
 	''' to do: make more mappings;  make them better; import users and orgs '''
 	#map to the UV id. Can we force an ID in zendesk to match?
-	new_ticket = {}	
+	new_ticket = {}
 	new_ticket = reformat_uv_messages(new_ticket, ticket['messages'])
 	new_ticket['external_id'] = int(ticket['url'].split("/")[-1])
 	new_ticket['subject'] = ticket['subject']
@@ -176,9 +175,3 @@ if __name__ == '__main__':
 		download_uv_tickets(uv_ticket_outfile, total_records=60000)
 		print "not really downloading ticket"
 	import_tickets_to_zd(uv_ticket_outfile)
-
-
-
-
-
-
