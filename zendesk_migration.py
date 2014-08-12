@@ -32,7 +32,7 @@ def reformat_uv_messages(new_ticket, uv_messages):
 		try: 
 			new_ticket['description']
 		except:
-			new_ticket['description'] = message['plaintext_body']# .replace("\"", r"\"").replace("\'", r"\'")
+			new_ticket['description'] = message['body']
 		dates.append(message['created_at'])
 		zd_message = {}
 		zd_message['updated_at'] = message['updated_at']
@@ -46,10 +46,17 @@ def reformat_uv_messages(new_ticket, uv_messages):
 		comments.append(zd_message)
 
 	dates.sort()
-	new_ticket['created_at'] = dates[0] #min of messages
-	new_ticket['updated_at'] = dates[-1] #max of messages
-	new_ticket['solved_at'] = dates[-1]
+	#add a try catch to get tickets with no messages
+	try:
+		new_ticket['created_at'] = dates[0] #min of messages
+		new_ticket['updated_at'] = dates[-1] #max of messages
+		new_ticket['solved_at'] = dates[-1]
+	except:
+		pass		
 	new_ticket['comments'] = comments
+	new_ticket['requester_id'] = 352590805
+	new_ticket['submitter_id'] = 352590805
+
 
 	''' to do: create users and add to a userlist to map uservoice id to zendesk_id'''
 
@@ -136,9 +143,10 @@ def import_tickets_to_zd(uv_ticket_outfile):
 		for line in uservoice_export: 
 			print "Working on ticket batch %i" % batch
 			ticket_batch = json.loads(line)
-			for ticket in ticket_batch[1:10]:			
-				new_ticket = process_uv_ticket(ticket)
-				send_ticket_to_zd(new_ticket)
+			if batch > 16:
+				for ticket in ticket_batch:			
+					new_ticket = process_uv_ticket(ticket)
+					send_ticket_to_zd(new_ticket)
 			batch += 1
 
 def process_uv_ticket(ticket): 		
@@ -150,8 +158,6 @@ def process_uv_ticket(ticket):
 	new_ticket['external_id'] = int(ticket['url'].split("/")[-1])
 	new_ticket['subject'] = ticket['subject']
 	new_ticket['tag'] = get_tags(ticket['custom_fields'])
-	new_ticket['requester_id'] = ticket['created_by']['id']
-	new_ticket['submitter_id'] = ticket['created_by']['id']
 	try: 
 		new_ticket['assignee_id'] = ticket['assignee']['id']
 	except KeyError:
