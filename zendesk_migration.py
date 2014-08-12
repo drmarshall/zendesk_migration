@@ -37,16 +37,22 @@ def reformat_uv_messages(new_ticket, uv_messages):
 		zd_message = {}
 		zd_message['updated_at'] = message['updated_at']
 		zd_message['author_id'] = message['sender']['id']
-		zd_message['html_body'] = message['body']# .replace("\"", r"\"").replace("\'", r"\'")
-		zd_message['value'] = message['plaintext_body']
-		zd_message['body'] = message['plaintext_body']# .replace("\"", r"\"").replace("\'", r"\'")
+		''' 
+		it turns out that a user must already exist to be an author
+		so, I created a user to hold all old tickets, with id = 352590805
+		'''
+		zd_message['author_id'] = 352590805
+		zd_message['value'] = message['body']
 		comments.append(zd_message)
 
 	dates.sort()
-
 	new_ticket['created_at'] = dates[0] #min of messages
 	new_ticket['updated_at'] = dates[-1] #max of messages
+	new_ticket['solved_at'] = dates[-1]
 	new_ticket['comments'] = comments
+
+	''' to do: create users and add to a userlist to map uservoice id to zendesk_id'''
+
 	return new_ticket
 
 def get_tags(ticket_custom_fields):
