@@ -148,10 +148,9 @@ def import_tickets_to_zd(uv_ticket_outfile):
 		for line in uservoice_export: 
 			print "Working on ticket batch %i" % batch
 			ticket_batch = json.loads(line)
-			if batch > 136:
-				for ticket in ticket_batch:			
-					new_ticket = process_uv_ticket(ticket)
-					send_ticket_to_zd(new_ticket)
+			for ticket in ticket_batch:			
+				new_ticket = process_uv_ticket(ticket)
+				send_ticket_to_zd(new_ticket)
 			batch += 1
 
 def process_uv_ticket(ticket): 		
