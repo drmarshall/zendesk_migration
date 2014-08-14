@@ -28,34 +28,39 @@ def reformat_uv_messages(new_ticket, uv_messages):
 	'''
 	comments = []
 	dates = []
+	is_first_message = True
 	for message in uv_messages:
-		try: 
-			new_ticket['description']
-		except:
+		dates.append(message['created_at'])		
+		if is_first_message:
 			new_ticket['description'] = message['body']
-		dates.append(message['created_at'])
-		zd_message = {}
-		zd_message['updated_at'] = message['created_at']
+			new_ticket['created_at'] = message['created_at']
+			is_first_message = False
+		else:
+			zd_message = {}
+			zd_message['updated_at'] = message['updated_at']
+			zd_message['author_id'] = 352695485
+			zd_message['value'] = message['body']
+			comments.append(zd_message)
 		''' 
 		it turns out that a user must already exist to be an author
 		so, I created a user to hold all old tickets, with id = 352590805
 		'''
-		zd_message['author_id'] = 352590805
-		zd_message['value'] = message['body']
-		comments.append(zd_message)
-
+		
 	dates.sort()
 	#add a try catch to get tickets with no messages
 	try:
 		new_ticket['created_at'] = dates[0] #min of messages
 		new_ticket['updated_at'] = dates[-1] #max of messages
 		new_ticket['solved_at'] = dates[-1]
+	except IndexError:
+		new_ticket['created_at'] = message['created_at'] #min of messages
+		new_ticket['solved_at'] = message['created_at']
 	except:
-		pass		
+		pass
+		
 	new_ticket['comments'] = comments
-	new_ticket['requester_id'] = 352590805
-	new_ticket['submitter_id'] = 352590805
-
+	new_ticket['requester_id'] = 352695485
+	new_ticket['submitter_id'] = 352695485
 
 	''' to do: create users and add to a userlist to map uservoice id to zendesk_id'''
 
@@ -143,9 +148,10 @@ def import_tickets_to_zd(uv_ticket_outfile):
 		for line in uservoice_export: 
 			print "Working on ticket batch %i" % batch
 			ticket_batch = json.loads(line)
-			for ticket in ticket_batch:			
-				new_ticket = process_uv_ticket(ticket)
-				send_ticket_to_zd(new_ticket)
+			if batch > 136:
+				for ticket in ticket_batch:			
+					new_ticket = process_uv_ticket(ticket)
+					send_ticket_to_zd(new_ticket)
 			batch += 1
 
 def process_uv_ticket(ticket): 		
