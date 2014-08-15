@@ -28,24 +28,21 @@ def reformat_uv_messages(new_ticket, uv_messages):
 	'''
 	comments = []
 	dates = []
-	is_first_message = True
 	for message in uv_messages:
 		dates.append(message['created_at'])		
-		if is_first_message:
-			new_ticket['description'] = message['body']
-			new_ticket['created_at'] = message['created_at']
-			is_first_message = False
-		else:
-			zd_message = {}
-			zd_message['updated_at'] = message['updated_at']
-			zd_message['author_id'] = 352695485
-			zd_message['value'] = message['body']
-			comments.append(zd_message)
+		new_ticket['description'] = message['body']
+		new_ticket['created_at'] = message['created_at']
+
+		zd_message = {}
+		zd_message['updated_at'] = message['updated_at']
+		zd_message['created_at'] = message['created_at']
+		zd_message['author_id'] = legacy_id
+		zd_message['value'] = message['body']
+		comments.append(zd_message)
 		''' 
 		it turns out that a user must already exist to be an author
 		so, I created a user to hold all old tickets, with id = 352590805
 		'''
-		
 	dates.sort()
 	#add a try catch to get tickets with no messages
 	try:
@@ -53,14 +50,11 @@ def reformat_uv_messages(new_ticket, uv_messages):
 		new_ticket['updated_at'] = dates[-1] #max of messages
 		new_ticket['solved_at'] = dates[-1]
 	except IndexError:
-		new_ticket['created_at'] = message['created_at'] #min of messages
-		new_ticket['solved_at'] = message['created_at']
-	except:
 		pass
-		
+
 	new_ticket['comments'] = comments
-	new_ticket['requester_id'] = 352695485
-	new_ticket['submitter_id'] = 352695485
+	new_ticket['requester_id'] = legacy_id
+	new_ticket['submitter_id'] = legacy_id
 
 	''' to do: create users and add to a userlist to map uservoice id to zendesk_id'''
 
@@ -162,11 +156,13 @@ def process_uv_ticket(ticket):
 	new_ticket['external_id'] = int(ticket['url'].split("/")[-1])
 	new_ticket['subject'] = ticket['subject']
 	new_ticket['tag'] = get_tags(ticket['custom_fields'])
+	'''
 	try: 
-		new_ticket['assignee_id'] = ticket['assignee']['id']
+		#new_ticket['assignee_id'] = ticket['assignee']['id']
 	except KeyError:
 		#new_ticket['assignee_id'] = None
 		pass
+	'''
 	# add static values to all tickets? include channel
 	new_ticket['status'] = 'closed'
 	new_ticket['recipient'] = 'support@mixpanel.com'
